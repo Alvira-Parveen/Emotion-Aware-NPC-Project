@@ -1,10 +1,11 @@
-🎭 Emotion-Aware NPC System
+# 🎭 Emotion-Aware NPC System
 
-AI-Driven Innovation in the Metaverse
+This project demonstrates **how AI-powered NPCs can detect human emotions in real time using a webcam feed and respond using speech**. It showcases how emotional intelligence can be integrated into virtual agents — an essential innovation for metaverse avatars, gaming, and human-AI interaction systems.
 
-This project demonstrates how AI-powered NPCs can detect human emotions in real time using a webcam feed and respond using speech. It showcases how emotional intelligence can be integrated into virtual agents — an essential innovation for metaverse avatars, gaming, and human-AI interaction systems.
+---
 
-🔥 Features
+# 🔥 Features
+
 | Feature                              | Status | Description                                           |
 | ------------------------------------ | ------ | ----------------------------------------------------- |
 | **Real-time webcam input**           | ✅      | Captures video of the user.                           |
@@ -13,53 +14,75 @@ This project demonstrates how AI-powered NPCs can detect human emotions in real 
 | **Voice output (macOS say)**         | ✅      | NPC speaks responses.                                 |
 | **Basic UI (bounding box)**          | ✅      | Displays face detection & emotion label.              |
 
-🧠 Technologies Used
+---
 
-Python 3
+# 🧠 Technologies Used
 
-OpenCV
+- Python 3
+- OpenCV
+- TensorFlow + Keras
+- FER (Facial Emotion Recognition)
+- pyttsx3 / macOS say voice
 
-TensorFlow + Keras
+---
 
-FER (Facial Emotion Recognition)
-
-pyttsx3 / macOS say voice
-
-🧩 Project Structure
+# 🧩 Project Structure
 
 emotion_npc/
 ├── npc_emotion.py        # Main file
 ├── requirements.txt      # Package list
 ├── README.md
 
-🚀 How to Run
+---
 
-# 1️⃣ Clone the repository
+# 🚀 How to Run
+
+**1️⃣ Clone the repository**
 git clone https://github.com/YOUR_USERNAME/emotion_npc.git
 cd emotion_npc
 
-# 2️⃣ Create and activate virtual environment
+**2️⃣ Create and activate virtual environment**
 python3 -m venv venv
 source venv/bin/activate          # On macOS/Linux
 
-# 3️⃣ Install dependencies
+**3️⃣ Install dependencies**
 pip install -r requirements.txt
 
-# 4️⃣ Run the project
+**4️⃣ Run the project**
 python3 npc_emotion.py
 
-🔮 Future Improvements
+---
 
-Animated 2D/3D avatars
+# 🔮 Future Improvements
 
-Multifacial detection
+- Animated 2D/3D avatars
+- Multifacial detection
+- VR/metaverse integration
+- Emotion memory tracking
 
-VR/metaverse integration
+---
 
-Emotion memory tracking
-
-🎯 Outcome
+# 🎯 Outcome
 
 ✔️ Successful demonstration of AI-driven emotional interaction
 ✔️ Fully working prototype
 ✔️ Valid implementation under “AI-Driven Innovation in the Metaverse”
+
+---
+
+# 📊 Results & Conclusion
+
+- The system successfully detects user facial emotions in real-time using the webcam.
+- NPC responses are emotion-aligned and spoken clearly via voice output, enhancing user interaction.
+- The bounding box and emotion label display help visually confirm detection.
+- Response timing is managed using a cooldown mechanism, which prevents over-sensitivity or rapid speech.
+- Works smoothly for front-facing users under normal lighting conditions, showing practical performance.
+- The project effectively demonstrates how AI-driven emotional intelligence can be integrated into virtual NPCs to provide a more natural and immersive interaction.
+
+---
+
+## 👩‍💻 Author
+
+**Name**: ALVIRA PARVEEN  
+🔗 [LinkedIn](https://www.linkedin.com/in/alvira-parveen-78022536b)  
+🌐 [GitHub](https://github.com/Alvira-Parveen)
