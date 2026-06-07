@@ -14,10 +14,17 @@ import io
 
 app = Flask(__name__)
 
-# ─── Emotion detector (loaded once) ─────────────────────────────────
-print("🔄 Loading emotion detection model...")
-detector = FER(mtcnn=True)
-print("✅ Model loaded!")
+# ─── Emotion detector (loaded lazily) ─────────────────────────────────
+detector = None
+
+def get_detector():
+    global detector
+    if detector is None:
+        print("🔄 Loading emotion detection model...", flush=True)
+        # This takes a long time on Render's free tier
+        detector = FER(mtcnn=True)
+        print("✅ Model loaded!", flush=True)
+    return detector
 
 # ─── NPC Dialogue Bank ──────────────────────────────────────────────
 dialogues = {
@@ -68,7 +75,8 @@ def detect():
         return jsonify({"error": f"Could not decode image: {str(e)}"}), 400
 
     # Detect emotions (ALL faces)
-    results = detector.detect_emotions(frame)
+    det = get_detector()
+    results = det.detect_emotions(frame)
 
     if not results:
         return jsonify({"error": "No face detected — try better lighting or look straight at the camera!"})
@@ -158,7 +166,8 @@ def challenge():
     except Exception as e:
         return jsonify({"error": f"Could not decode image: {str(e)}"}), 400
 
-    results = detector.detect_emotions(frame)
+    det = get_detector()
+    results = det.detect_emotions(frame)
     if not results:
         return jsonify({"error": "No face detected! Make sure your face is visible."})
 
@@ -218,3 +227,4 @@ if __name__ == "__main__":
     print("  🖥️  Local:  http://127.0.0.1:8080")
     print("=" * 55 + "\n")
     app.run(host="0.0.0.0", port=8080, debug=False)
+
