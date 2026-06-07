@@ -1,37 +1,52 @@
 # 🎭 Emotion-Aware NPC System
 
-This project demonstrates **how AI-powered NPCs can detect human emotions in real time using a webcam feed and respond using speech**. It showcases how emotional intelligence can be integrated into virtual agents — an essential innovation for metaverse avatars, gaming, and human-AI interaction systems.
+This project demonstrates **how AI-powered NPCs can detect human emotions in real time using a webcam feed and respond using speech and generates NPC (Non-Player Character) dialogue responses based on the detected mood.**. It showcases how emotional intelligence can be integrated into virtual agents — an essential innovation for metaverse avatars, gaming, and human-AI interaction systems.
 
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Flask](https://img.shields.io/badge/Flask-3.x-green)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-orange)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 ---
 
 # 🔥 Features
 
-| Feature                              | Status | Description                                           |
-| ------------------------------------ | ------ | ----------------------------------------------------- |
-| **Real-time webcam input**           | ✅      | Captures video of the user.                           |
-| **Emotion detection (FER + OpenCV)** | ✅      | Detects happy, sad, angry, neutral, fear, surprise.   |
-| **NPC response system**              | ✅      | NPC replies emotionally based on detected expression. |
-| **Voice output (macOS say)**         | ✅      | NPC speaks responses.                                 |
-| **Basic UI (bounding box)**          | ✅      | Displays face detection & emotion label.              |
+| Feature | Description |
+|---------|-------------|
+| 🎯 **Emotion Detection** | Detects 7 emotions (Happy, Sad, Angry, Surprise, Fear, Disgust, Neutral) with confidence scores |
+| 🧙 **NPC Companion** | AI character that responds with contextual dialogue based on your mood |
+| 🏆 **Challenge Mode** | Gamified emotion matching with grades (S/A/B/C/D) and streak tracking |
+| 🗣️ **NPC Voice** | NPC speaks dialogue aloud using browser Text-to-Speech |
+| 🎵 **Mood Music** | Generated ambient tones matching each emotion via Web Audio API |
+| 🌐 **Multi-Face Detection** | Detects emotions on multiple faces simultaneously |
+| 📸 **Selfie Gallery** | Session history with timestamps, emotions, and NPC quotes |
+| 📥 **Shareable Cards** | Download styled PNG cards of your results for social media |
+| 📁 **Upload & Drag-Drop** | Upload photos or drag & drop images directly |
+| ↩️ **Clear/Reset** | Go back to webcam without refreshing the page |
+| ℹ️ **About & Guide** | Built-in project info and usage instructions |
 
 ---
 
 # 🧠 Technologies Used
 
-- Python 3
-- OpenCV
-- TensorFlow + Keras
-- FER (Facial Emotion Recognition)
-- pyttsx3 / macOS say voice
+- **Backend:** Python, Flask
+- **AI/ML:** FER (Facial Emotion Recognition), MTCNN, TensorFlow/Keras, OpenCV
+- **Frontend:** Vanilla JavaScript, CSS (Glassmorphism), HTML5
+- **Browser APIs:** getUserMedia, Web Speech API, Web Audio API, Canvas API
+- **Image Processing:** Pillow (PIL)
 
 ---
 
 # 🧩 Project Structure
 
+```
 emotion_npc/
-├── npc_emotion.py        # Main file
-├── requirements.txt      # Package list
-├── README.md
+├── web_app.py              # Flask backend + emotion detection API
+├── templates/
+│   └── index.html          # Full frontend (HTML/CSS/JS)
+├── npc_emotion.py          # Original OpenCV-based script
+├── requirements.txt        # Python dependencies
+└── README.md               # This file
+```
 
 ---
 
@@ -49,9 +64,23 @@ source venv/bin/activate          # On macOS/Linux
 pip install -r requirements.txt
 
 **4️⃣ Run the project**
-python3 npc_emotion.py
+python web_app.py
 
 ---
+
+## 📖 How to Use
+
+1. **Allow Camera** — Grant camera access when prompted, or use the upload button instead
+2. **Detect Emotion** — Click "🎯 Detect" to scan your face from the webcam
+3. **Upload Photo** — Click "📁 Upload" to analyze a saved photo
+4. **View Results** — See your emotion, NPC dialogue, confidence bars, and badge
+5. **Download Card** — Click "📥 Download Shareable Card" to save a styled PNG
+6. **Challenge Mode** — Switch to "🏆 Challenge" tab to test your acting skills
+7. **Gallery** — Check the "📸 Gallery" tab for your session history
+8. **Voice & Music** — Toggle on NPC Voice and Mood Music for the full experience
+
+---
+
 
 # 🔮 Future Improvements
 
@@ -86,3 +115,13 @@ python3 npc_emotion.py
 **Name**: ALVIRA PARVEEN  
 🔗 [LinkedIn](https://www.linkedin.com/in/alvira-parveen-78022536b)  
 🌐 [GitHub](https://github.com/Alvira-Parveen)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+⭐ If you found this project useful, consider giving it a star.
