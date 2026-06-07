@@ -1,6 +1,5 @@
 opencv-python-headless
-tensorflow-cpu==2.16.2
-keras
+tensorflow-cpu==2.15.1
 fer==22.5.1
 Pillow
 flask
