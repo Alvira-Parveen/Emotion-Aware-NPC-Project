@@ -6,12 +6,13 @@ This project demonstrates **how AI-powered NPCs can detect human emotions in rea
 ![Flask](https://img.shields.io/badge/Flask-3.x-green)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-orange)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
+![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)
 
 ---
 
 ## 🚀 Live Demo
 
-[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Alvira-14/emotion-aware-npc)
+👉 **[Try it live here](https://huggingface.co/spaces/Alvira-14/emotion-aware-npc)**
 
 ---
 
