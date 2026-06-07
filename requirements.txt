@@ -3,3 +3,5 @@ tensorflow
 keras
 fer
 moviepy
+gradio
+Pillow
