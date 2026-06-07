@@ -1,6 +1,7 @@
 opencv-python-headless
 tensorflow-cpu==2.15.1
 fer==22.5.1
+moviepy<2.0.0
 Pillow
 flask
 gunicorn
