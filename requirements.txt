@@ -1,7 +1,8 @@
-opencv-python
+opencv-python-headless
 tensorflow
 keras
 fer
-moviepy
-gradio
 Pillow
+flask
+gunicorn
+numpy
