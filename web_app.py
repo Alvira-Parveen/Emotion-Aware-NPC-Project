@@ -11,19 +11,27 @@ from PIL import Image, ImageDraw, ImageFont
 import random
 import base64
 import io
+import threading
 
 app = Flask(__name__)
 
-# ─── Emotion detector (loaded lazily) ─────────────────────────────────
+# ─── Emotion detector (loaded lazily in background) ─────────────────
 detector = None
+model_loading = False
+
+def load_model_background():
+    global detector, model_loading
+    if detector is None and not model_loading:
+        model_loading = True
+        print("🔄 Loading emotion detection model in background...", flush=True)
+        try:
+            detector = FER(mtcnn=True)
+            print("✅ Model loaded successfully!", flush=True)
+        except Exception as e:
+            print(f"❌ Error loading model: {e}", flush=True)
+            model_loading = False
 
 def get_detector():
-    global detector
-    if detector is None:
-        print("🔄 Loading emotion detection model...", flush=True)
-        # This takes a long time on Render's free tier
-        detector = FER(mtcnn=True)
-        print("✅ Model loaded!", flush=True)
     return detector
 
 # ─── NPC Dialogue Bank ──────────────────────────────────────────────
@@ -76,6 +84,11 @@ def detect():
 
     # Detect emotions (ALL faces)
     det = get_detector()
+    if det is None:
+        # Start background load if not already started
+        threading.Thread(target=load_model_background, daemon=True).start()
+        return jsonify({"error": "⏳ Model is warming up! This takes ~2 minutes. Please wait and try again."})
+
     results = det.detect_emotions(frame)
 
     if not results:
@@ -167,6 +180,10 @@ def challenge():
         return jsonify({"error": f"Could not decode image: {str(e)}"}), 400
 
     det = get_detector()
+    if det is None:
+        threading.Thread(target=load_model_background, daemon=True).start()
+        return jsonify({"error": "⏳ Model is warming up! This takes ~2 minutes. Please wait and try again."})
+
     results = det.detect_emotions(frame)
     if not results:
         return jsonify({"error": "No face detected! Make sure your face is visible."})
