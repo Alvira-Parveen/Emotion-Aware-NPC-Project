@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 Emotion-Aware NPC</title>
+    <meta name="description" content="AI-powered NPC that reads your emotions in real-time and responds with dialogue.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --pink: #f093fb; --coral: #f5576c; --blue: #4facfe; --cyan: #00f2fe;
+            --purple: #a855f7; --green: #48c78e; --gold: #f1c40f;
+            --dark-1: #0a0a1a; --dark-2: #12122a; --dark-3: #1a1a3e;
+            --glass: rgba(255,255,255,0.04); --glass-border: rgba(255,255,255,0.08);
+            --radius: 20px;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--dark-1);
+            min-height: 100vh;
+            color: #e0e0f0;
+            overflow-x: hidden;
+        }
+
+        /* ═══ Animated Background ═══ */
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+        .bg-mesh .orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(80px); opacity: 0.35;
+            animation: float 15s ease-in-out infinite;
+        }
+        .bg-mesh .orb:nth-child(1) { width:500px;height:500px;background:var(--pink);top:-10%;left:-10%; }
+        .bg-mesh .orb:nth-child(2) { width:400px;height:400px;background:var(--blue);top:60%;right:-5%;animation-delay:-5s; }
+        .bg-mesh .orb:nth-child(3) { width:350px;height:350px;background:var(--purple);bottom:-10%;left:30%;animation-delay:-10s; }
+        @keyframes float {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(30px,-40px) scale(1.05); }
+            66% { transform: translate(-20px,30px) scale(0.95); }
+        }
+        .stars {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image:
+                radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 45% 55%, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1.5px 1.5px at 70% 15%, rgba(255,255,255,0.35), transparent),
+                radial-gradient(1px 1px at 85% 75%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1px 1px at 30% 85%, rgba(255,255,255,0.2), transparent);
+            animation: twinkle 4s ease-in-out infinite alternate;
+        }
+        @keyframes twinkle { 0%{opacity:.6} 100%{opacity:1} }
+
+        .container { position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:20px 20px 40px; }
+
+        /* ═══ Header ═══ */
+        .header { text-align:center;margin-bottom:24px; }
+        .header h1 {
+            font-size:3rem;font-weight:900;letter-spacing:-2px;line-height:1.1;
+            background:linear-gradient(135deg,var(--pink),var(--coral),var(--blue));
+            background-size:200% 200%;
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+            animation:grad-shift 4s ease infinite;
+        }
+        @keyframes grad-shift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .header p { color:#7878a0;font-size:1.05rem;margin-top:4px; }
+
+        /* ═══ Mode Tabs ═══ */
+        .tabs {
+            display:flex;justify-content:center;gap:6px;margin-bottom:22px;
+            background:rgba(255,255,255,0.03);border-radius:14px;padding:5px;
+            border:1px solid var(--glass-border);width:fit-content;margin-left:auto;margin-right:auto;
+        }
+        .tab {
+            padding:10px 22px;border-radius:10px;border:none;
+            font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:600;
+            cursor:pointer;transition:all 0.3s;color:#777;background:transparent;
+        }
+        .tab:hover { color:#bbb; }
+        .tab.active {
+            background:linear-gradient(135deg,var(--pink),var(--coral));
+            color:#fff;box-shadow:0 4px 20px rgba(245,87,108,0.3);
+        }
+
+        /* ═══ Glass Card ═══ */
+        .card {
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius);backdrop-filter:blur(24px);
+            -webkit-backdrop-filter:blur(24px);padding:24px;position:relative;overflow:hidden;
+        }
+        .card::before {
+            content:'';position:absolute;top:0;left:0;right:0;height:1px;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+        }
+        .card-title {
+            font-weight:700;font-size:0.8rem;color:#888;text-transform:uppercase;
+            letter-spacing:1.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;
+        }
+        .dot {
+            width:8px;height:8px;border-radius:50%;background:#48c78e;
+            box-shadow:0 0 6px #48c78e;animation:pulse-dot 2s ease infinite;
+        }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+        .main-grid { display:grid;grid-template-columns:1fr 1fr;gap:24px; }
+        @media (max-width:820px) { .main-grid{grid-template-columns:1fr} .header h1{font-size:2.2rem} }
+
+        /* ═══ Video ═══ */
+        .video-wrap {
+            position:relative;border-radius:14px;overflow:hidden;
+            background:linear-gradient(135deg,#0d0d20,#111130);
+            aspect-ratio:4/3;border:1px solid rgba(255,255,255,0.05);
+        }
+        #webcam,#canvas { width:100%;height:100%;object-fit:cover;display:block; }
+        #canvas { display:none; }
+        .drop-overlay {
+            display:none;position:absolute;inset:0;background:rgba(79,172,254,0.15);
+            border:3px dashed var(--blue);border-radius:14px;z-index:10;
+            align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:var(--cyan);
+            backdrop-filter:blur(6px);
+        }
+        .drop-overlay.active { display:flex; }
+
+        /* ═══ Buttons ═══ */
+        .btn-row { display:flex;gap:10px;margin-top:14px; }
+        .btn {
+            flex:1;padding:13px 10px;border:none;border-radius:14px;
+            font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;
+            cursor:pointer;transition:all .25s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden;
+        }
+        .btn:hover { transform:translateY(-3px); }
+        .btn:active { transform:translateY(0); }
+        .btn-detect { background:linear-gradient(135deg,var(--pink),var(--coral));color:#fff;box-shadow:0 4px 20px rgba(245,87,108,.35); }
+        .btn-detect:hover { box-shadow:0 8px 28px rgba(245,87,108,.5); }
+        .btn-detect:disabled { opacity:.5;cursor:not-allowed;transform:none!important; }
+        .btn-upload { background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;box-shadow:0 4px 20px rgba(79,172,254,.3); }
+        .btn-upload:hover { box-shadow:0 8px 28px rgba(79,172,254,.5); }
+        .btn-reset { background:linear-gradient(135deg,#e67e22,#e74c3c);color:#fff;box-shadow:0 4px 20px rgba(231,76,60,.3); }
+        .btn-reset:hover { box-shadow:0 8px 28px rgba(231,76,60,.5); }
+        #file-input { display:none; }
+        .status-bar { text-align:center;font-size:.82rem;color:#666;margin-top:8px;min-height:20px; }
+        .spinner { display:none;width:24px;height:24px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--pink);border-radius:50%;animation:spin .6s linear infinite;margin:8px auto 0; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* ═══ Result Image ═══ */
+        .result-wrap {
+            border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#0d0d20,#111130);
+            min-height:180px;display:flex;align-items:center;justify-content:center;
+            border:1px solid rgba(255,255,255,.05);
+        }
+        #result-img { width:100%;border-radius:14px;display:none; }
+        .placeholder { color:#333;font-size:3rem;user-select:none; }
+
+        /* ═══ Multi-Face NPC Cards ═══ */
+        .npc-list { display:flex;flex-direction:column;gap:10px;margin-top:14px; }
+        .npc-card {
+            padding:16px 18px;border-radius:14px;
+            background:linear-gradient(135deg,rgba(168,85,247,.06),rgba(240,147,251,.04));
+            border:1px solid rgba(168,85,247,.12);transition:all .4s;position:relative;overflow:hidden;
+        }
+        .npc-card.active { border-color:rgba(240,147,251,.4);box-shadow:0 0 25px rgba(240,147,251,.1); }
+        .npc-header { display:flex;align-items:center;gap:10px;margin-bottom:6px; }
+        .npc-emoji { font-size:2rem;line-height:1;animation:npc-bounce 2s ease infinite; }
+        @keyframes npc-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+        .npc-name { font-size:.7rem;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:2px; }
+        .npc-face-tag { font-size:.65rem;color:#555;background:rgba(255,255,255,.05);padding:2px 8px;border-radius:6px;margin-left:auto; }
+        .npc-dialogue { font-size:1.15rem;font-weight:600;color:#e8dff5;line-height:1.3; }
+
+        /* ═══ Emotion Badge ═══ */
+        .badge-row { text-align:center;margin-top:12px; }
+        .emotion-badge {
+            display:none;padding:7px 22px;border-radius:50px;font-weight:700;
+            font-size:.85rem;text-transform:uppercase;letter-spacing:1.5px;color:#fff;
+            animation:badge-pop .4s cubic-bezier(.22,1,.36,1);
+        }
+        @keyframes badge-pop { 0%{transform:scale(.7);opacity:0} 100%{transform:scale(1);opacity:1} }
+
+        /* ═══ Emotion Bars ═══ */
+        .bars { margin-top:14px; }
+        .bar-row { display:flex;align-items:center;margin-bottom:6px;gap:10px; }
+        .bar-label { width:70px;font-size:.78rem;font-weight:500;color:#777;text-transform:capitalize; }
+        .bar-track { flex:1;height:8px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden; }
+        .bar-fill { height:100%;border-radius:4px;width:0%;transition:width .8s cubic-bezier(.22,1,.36,1); }
+        .bar-pct { width:44px;font-size:.78rem;font-weight:600;color:#666;text-align:right;font-variant-numeric:tabular-nums; }
+
+        /* ═══ Voice Toggle ═══ */
+        .toggle-row {
+            display:flex;align-items:center;gap:10px;margin-top:12px;
+            padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.03);
+            border:1px solid var(--glass-border);
+        }
+        .toggle-label { font-size:.85rem;color:#888;flex:1; }
+        .toggle {
+            width:44px;height:24px;border-radius:12px;background:#333;
+            position:relative;cursor:pointer;transition:background .3s;border:none;
+        }
+        .toggle.on { background:linear-gradient(135deg,var(--pink),var(--coral)); }
+        .toggle::after {
+            content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;
+            border-radius:50%;background:#fff;transition:transform .3s;
+        }
+        .toggle.on::after { transform:translateX(20px); }
+
+        /* ═══ Challenge Mode ═══ */
+        .mode-panel { display:none; }
+        .mode-panel.active { display:block; }
+
+        .challenge-card {
+            text-align:center;padding:30px 20px;border-radius:var(--radius);
+            background:linear-gradient(135deg,rgba(241,196,15,.06),rgba(245,87,108,.04));
+            border:1px solid rgba(241,196,15,.15);margin-top:14px;
+        }
+        .challenge-emoji { font-size:4rem;margin-bottom:10px;animation:npc-bounce 1.5s ease infinite; }
+        .challenge-prompt { font-size:1.3rem;font-weight:700;color:#f0e6ff;margin-bottom:6px; }
+        .challenge-sub { font-size:.9rem;color:#888;margin-bottom:20px; }
+        .btn-challenge {
+            background:linear-gradient(135deg,var(--gold),#e67e22);color:#fff;
+            box-shadow:0 4px 20px rgba(241,196,15,.3);width:auto;flex:none;padding:14px 40px;
+            display:inline-block;
+        }
+        .btn-challenge:hover { box-shadow:0 8px 28px rgba(241,196,15,.5); }
+
+        /* Score display */
+        .score-display { display:none;text-align:center;margin-top:16px; }
+        .score-circle {
+            width:120px;height:120px;border-radius:50%;
+            display:inline-flex;align-items:center;justify-content:center;flex-direction:column;
+            font-weight:900;font-size:2rem;color:#fff;margin-bottom:12px;
+            position:relative;
+        }
+        .score-circle .grade {
+            position:absolute;top:-8px;right:-8px;width:36px;height:36px;
+            border-radius:50%;display:flex;align-items:center;justify-content:center;
+            font-size:.9rem;font-weight:800;color:#fff;
+        }
+        .score-pct { font-size:2.2rem;line-height:1; }
+        .score-sub { font-size:.7rem;font-weight:400;opacity:.8; }
+        .score-feedback { font-size:1.2rem;font-weight:700;color:#f0e6ff; }
+        .score-detail { font-size:.85rem;color:#888;margin-top:4px; }
+        .challenge-streak { font-size:.9rem;color:var(--gold);margin-top:10px;font-weight:600; }
+
+        /* ═══ Music indicator ═══ */
+        .music-indicator {
+            display:none;align-items:center;gap:8px;margin-top:10px;
+            padding:8px 14px;border-radius:10px;background:rgba(72,199,142,.06);
+            border:1px solid rgba(72,199,142,.15);font-size:.82rem;color:var(--green);
+        }
+        .music-indicator.active { display:flex; }
+        .music-bars {
+            display:flex;gap:2px;align-items:flex-end;height:16px;
+        }
+        .music-bars span {
+            width:3px;background:var(--green);border-radius:2px;
+            animation:music-bar .8s ease-in-out infinite alternate;
+        }
+        .music-bars span:nth-child(1) { height:6px;animation-delay:0s; }
+        .music-bars span:nth-child(2) { height:12px;animation-delay:.15s; }
+        .music-bars span:nth-child(3) { height:8px;animation-delay:.3s; }
+        .music-bars span:nth-child(4) { height:14px;animation-delay:.1s; }
+        .music-bars span:nth-child(5) { height:5px;animation-delay:.25s; }
+        @keyframes music-bar { to{height:16px} }
+
+        .face-count-badge {
+            display:inline-block;padding:4px 12px;border-radius:8px;font-size:.75rem;
+            font-weight:700;background:rgba(79,172,254,.1);color:var(--blue);
+            border:1px solid rgba(79,172,254,.2);margin-left:auto;
+        }
+
+        footer { text-align:center;color:#444;font-size:.82rem;margin-top:30px; }
+        footer strong { color:#888; }
+
+        /* ═══ Gallery ═══ */
+        .gallery-section { margin-top:24px; }
+        .gallery-header {
+            display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+        }
+        .gallery-header h2 {
+            font-size:1.2rem;font-weight:700;color:#ccc;
+        }
+        .gallery-count { font-size:.8rem;color:#666; }
+        .gallery-grid {
+            display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;
+        }
+        .gallery-item {
+            border-radius:14px;overflow:hidden;background:var(--glass);
+            border:1px solid var(--glass-border);transition:transform .3s,box-shadow .3s;
+            cursor:pointer;
+        }
+        .gallery-item:hover { transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,.4); }
+        .gallery-item img { width:100%;aspect-ratio:4/3;object-fit:cover;display:block; }
+        .gallery-item-info { padding:12px; }
+        .gallery-emotion {
+            display:inline-block;padding:3px 10px;border-radius:50px;font-size:.7rem;
+            font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#fff;margin-bottom:6px;
+        }
+        .gallery-quote { font-size:.85rem;color:#aaa;line-height:1.3;font-style:italic; }
+        .gallery-time { font-size:.7rem;color:#555;margin-top:6px; }
+        .gallery-empty {
+            text-align:center;padding:40px 20px;color:#444;font-size:.9rem;
+            grid-column:1/-1;
+        }
+        .btn-clear-gallery {
+            background:rgba(231,76,60,.1);color:#e74c3c;border:1px solid rgba(231,76,60,.2);
+            padding:6px 14px;border-radius:8px;font-size:.75rem;font-weight:600;
+            cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif;
+        }
+        .btn-clear-gallery:hover { background:rgba(231,76,60,.2); }
+
+        /* ═══ Download button ═══ */
+        .btn-download {
+            background:linear-gradient(135deg,var(--green),#2ecc71);color:#fff;
+            box-shadow:0 4px 20px rgba(72,199,142,.3);margin-top:12px;
+            padding:12px;border:none;border-radius:12px;font-family:'Outfit',sans-serif;
+            font-size:.9rem;font-weight:700;cursor:pointer;width:100%;
+            transition:all .25s;display:none;
+        }
+        .btn-download:hover { transform:translateY(-2px);box-shadow:0 8px 28px rgba(72,199,142,.5); }
+        #share-canvas { display:none; }
+
+        /* ═══ About Section ═══ */
+        .about-section { margin-top:24px; }
+        .about-card {
+            background:var(--glass);border:1px solid var(--glass-border);
+            border-radius:var(--radius);backdrop-filter:blur(24px);
+            -webkit-backdrop-filter:blur(24px);padding:32px;position:relative;overflow:hidden;
+        }
+        .about-card::before {
+            content:'';position:absolute;top:0;left:0;right:0;height:1px;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+        }
+        .about-card h2 {
+            font-size:1.6rem;font-weight:800;margin-bottom:6px;
+            background:linear-gradient(135deg,var(--pink),var(--blue));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+        }
+        .about-card h3 { font-size:1.1rem;font-weight:700;color:#ccc;margin-top:22px;margin-bottom:8px; }
+        .about-card p { color:#999;line-height:1.6;font-size:.95rem; }
+        .about-card ul { list-style:none;padding:0;margin:0; }
+        .about-card li {
+            padding:8px 0;color:#aaa;font-size:.9rem;border-bottom:1px solid rgba(255,255,255,.04);
+            display:flex;align-items:flex-start;gap:10px;
+        }
+        .about-card li:last-child { border:none; }
+        .about-card li .li-icon { font-size:1.1rem;flex-shrink:0;margin-top:1px; }
+        .tech-badges { display:flex;flex-wrap:wrap;gap:8px;margin-top:8px; }
+        .tech-badge {
+            padding:5px 14px;border-radius:50px;font-size:.78rem;font-weight:600;
+            background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#bbb;
+        }
+        .step-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px; }
+        .step-card {
+            padding:16px;border-radius:14px;background:rgba(255,255,255,.02);
+            border:1px solid rgba(255,255,255,.05);text-align:center;
+        }
+        .step-num {
+            width:32px;height:32px;border-radius:50%;display:inline-flex;
+            align-items:center;justify-content:center;font-weight:800;font-size:.85rem;
+            color:#fff;margin-bottom:8px;
+        }
+        .step-card p { font-size:.85rem;color:#999;margin:0; }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Emotion-Aware NPC</h1>
+            <p>AI companion that reads your emotions & reacts in real time</p>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchMode('detect')">🎭 Detect</button>
+            <button class="tab" onclick="switchMode('challenge')">🏆 Challenge</button>
+            <button class="tab" onclick="switchMode('gallery')">📸 Gallery</button>
+            <button class="tab" onclick="switchMode('about')">ℹ️ About</button>
+        </div>
+
+        <div class="main-grid">
+            <!-- ── LEFT: Camera ── -->
+            <div class="card" id="camera-card">
+                <div class="card-title"><span class="dot"></span> Live Camera</div>
+                <div class="video-wrap" id="video-wrap">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <canvas id="canvas"></canvas>
+                    <div class="drop-overlay" id="drop-overlay">📁 Drop image here</div>
+                </div>
+
+                <!-- Detect Mode buttons -->
+                <div class="mode-panel active" id="panel-detect">
+                    <div class="btn-row">
+                        <button id="detect-btn" class="btn btn-detect" onclick="captureAndDetect()" disabled>🎯 Detect Emotion</button>
+                        <button class="btn btn-upload" onclick="document.getElementById('file-input').click()">📁 Upload</button>
+                        <button class="btn btn-reset" id="reset-btn" onclick="resetCamera()" style="display:none;">↩️ Clear</button>
+                        <input type="file" id="file-input" accept="image/*" onchange="handleUpload(event)">
+                    </div>
+                </div>
+
+                <!-- Challenge Mode buttons -->
+                <div class="mode-panel" id="panel-challenge">
+                    <div class="challenge-card" id="challenge-prompt-card">
+                        <div class="challenge-emoji" id="challenge-emoji">🎭</div>
+                        <div class="challenge-prompt" id="challenge-prompt">Ready to play?</div>
+                        <div class="challenge-sub" id="challenge-sub">Test how well you can act out emotions!</div>
+                        <button class="btn btn-challenge" onclick="startChallenge()">🎲 Start Challenge</button>
+                    </div>
+                    <div class="btn-row" id="challenge-snap-row" style="display:none;">
+                        <button id="challenge-btn" class="btn btn-detect" onclick="submitChallenge()">📸 Submit Expression</button>
+                        <button class="btn btn-upload" onclick="skipChallenge()">⏭️ Skip</button>
+                    </div>
+                </div>
+
+                <div class="spinner" id="spinner"></div>
+                <div class="status-bar" id="status">Initializing camera…</div>
+
+                <!-- Toggles -->
+                <div class="toggle-row">
+                    <span class="toggle-label">🗣️ NPC Voice</span>
+                    <button class="toggle" id="voice-toggle" onclick="toggleVoice()"></button>
+                </div>
+                <div class="toggle-row" style="margin-top:6px;">
+                    <span class="toggle-label">🎵 Mood Music</span>
+                    <button class="toggle" id="music-toggle" onclick="toggleMusic()"></button>
+                </div>
+                <div class="music-indicator" id="music-indicator">
+                    <div class="music-bars"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span id="music-label">Playing: —</span>
+                </div>
+            </div>
+
+            <!-- ── RIGHT: Results ── -->
+            <div class="card" id="results-card">
+                <!-- Detect Mode Results -->
+                <div class="mode-panel active" id="results-detect">
+                    <div class="card-title">
+                        <span class="dot" style="background:#f5576c;box-shadow:0 0 6px #f5576c;"></span>
+                        Detection Result
+                        <span class="face-count-badge" id="face-count" style="display:none;">1 face</span>
+                    </div>
+                    <div class="result-wrap">
+                        <img id="result-img" alt="Detection result">
+                        <span class="placeholder" id="placeholder">🎭</span>
+                    </div>
+                    <div class="npc-list" id="npc-list">
+                        <div class="npc-card" id="npc-card-default">
+                            <div class="npc-header">
+                                <span class="npc-emoji">🧙</span>
+                                <span class="npc-name">NPC Companion</span>
+                            </div>
+                            <div class="npc-dialogue">Waiting for your expression…</div>
+                        </div>
+                    </div>
+                    <div class="badge-row"><span class="emotion-badge" id="emotion-badge"></span></div>
+                    <div class="bars" id="emotion-bars"></div>
+                    <button class="btn-download" id="download-btn" onclick="downloadShareCard()">📥 Download Shareable Card</button>
+                </div>
+
+                <!-- Challenge Mode Results -->
+                <div class="mode-panel" id="results-challenge">
+                    <div class="card-title">
+                        <span class="dot" style="background:var(--gold);box-shadow:0 0 6px var(--gold);"></span>
+                        Challenge Results
+                    </div>
+                    <div class="score-display" id="score-display">
+                        <div class="score-circle" id="score-circle">
+                            <span class="score-pct" id="score-pct">0%</span>
+                            <span class="score-sub">match</span>
+                            <div class="grade" id="score-grade">S</div>
+                        </div>
+                        <div class="score-feedback" id="score-feedback"></div>
+                        <div class="score-detail" id="score-detail"></div>
+                        <div class="challenge-streak" id="challenge-streak"></div>
+                        <button class="btn btn-challenge" style="margin-top:16px;" onclick="startChallenge()">🎲 Next Challenge</button>
+                    </div>
+                    <div style="text-align:center;padding:60px 20px;color:#555;" id="challenge-placeholder">
+                        <div style="font-size:3rem;margin-bottom:10px;">🏆</div>
+                        Start a challenge to see your score here!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Section (below the grid) -->
+        <div class="mode-panel gallery-section" id="panel-gallery">
+            <div class="card">
+                <div class="gallery-header">
+                    <h2>📸 Emotion Selfie Gallery</h2>
+                    <span class="gallery-count" id="gallery-count">0 captures</span>
+                    <button class="btn-clear-gallery" onclick="clearGallery()">🗑️ Clear All</button>
+                </div>
+                <div class="gallery-grid" id="gallery-grid">
+                    <div class="gallery-empty" id="gallery-empty">No captures yet — detect some emotions first!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About & Guide Section -->
+        <div class="mode-panel about-section" id="panel-about">
+            <div class="about-card">
+                <h2>🎭 About This Project</h2>
+                <p>Emotion-Aware NPC is an AI-powered web application that detects human emotions from facial expressions in real time and generates NPC (Non-Player Character) dialogue responses based on the detected mood. It combines computer vision, deep learning, and creative game design to create an interactive and engaging experience.</p>
+
+                <h3>🛠️ How It Was Built</h3>
+                <p>This project uses a combination of modern AI and web technologies:</p>
+                <div class="tech-badges">
+                    <span class="tech-badge">Python</span>
+                    <span class="tech-badge">Flask</span>
+                    <span class="tech-badge">FER (Face Emotion Recognition)</span>
+                    <span class="tech-badge">MTCNN Face Detection</span>
+                    <span class="tech-badge">TensorFlow / Keras</span>
+                    <span class="tech-badge">OpenCV</span>
+                    <span class="tech-badge">Pillow (PIL)</span>
+                    <span class="tech-badge">JavaScript</span>
+                    <span class="tech-badge">Web Audio API</span>
+                    <span class="tech-badge">Web Speech API</span>
+                    <span class="tech-badge">Canvas API</span>
+                    <span class="tech-badge">getUserMedia API</span>
+                </div>
+
+                <h3>✨ Features</h3>
+                <ul>
+                    <li><span class="li-icon">🎯</span> <div><strong>Real-time Emotion Detection</strong> — Detects 7 emotions (Happy, Sad, Angry, Surprise, Fear, Disgust, Neutral) with confidence scores using deep learning.</div></li>
+                    <li><span class="li-icon">🧙</span> <div><strong>NPC Companion</strong> — An AI character that responds with contextual dialogue based on your detected emotion.</div></li>
+                    <li><span class="li-icon">🏆</span> <div><strong>Challenge Mode</strong> — A gamified experience where you’re asked to act out specific emotions and scored on accuracy with letter grades (S/A/B/C/D) and streak tracking.</div></li>
+                    <li><span class="li-icon">🗣️</span> <div><strong>NPC Voice</strong> — The NPC speaks its dialogue aloud using the browser’s Text-to-Speech engine.</div></li>
+                    <li><span class="li-icon">🎵</span> <div><strong>Mood Music</strong> — Generates ambient tones matching the detected emotion using the Web Audio API.</div></li>
+                    <li><span class="li-icon">🌐</span> <div><strong>Multi-Face Detection</strong> — Detects emotions on multiple faces simultaneously in group photos.</div></li>
+                    <li><span class="li-icon">📸</span> <div><strong>Selfie Gallery</strong> — Saves all your detections as cards with timestamps, emotions, and NPC quotes.</div></li>
+                    <li><span class="li-icon">📥</span> <div><strong>Shareable Cards</strong> — Download beautiful styled PNG cards of your results to share on social media.</div></li>
+                    <li><span class="li-icon">📁</span> <div><strong>Upload & Drag-Drop</strong> — Upload photos or drag & drop images directly onto the camera area.</div></li>
+                </ul>
+
+                <h3>📖 How to Use</h3>
+                <div class="step-grid">
+                    <div class="step-card">
+                        <div class="step-num" style="background:var(--pink);">1</div>
+                        <p><strong>Allow Camera</strong><br>Grant camera access when prompted, or upload a photo instead.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num" style="background:var(--blue);">2</div>
+                        <p><strong>Detect Emotion</strong><br>Click "🎯 Detect" to scan your face, or "📁 Upload" for a saved photo.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num" style="background:var(--purple);">3</div>
+                        <p><strong>See Results</strong><br>View your emotion, NPC response, confidence bars, and download the card.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-num" style="background:var(--green);">4</div>
+                        <p><strong>Try Challenge</strong><br>Switch to Challenge Mode to test your acting skills and earn scores!</p>
+                    </div>
+                </div>
+
+                <h3>👩‍💻 Made By</h3>
+                <p style="font-size:1.1rem;color:#ccc;"><strong>Alvira Parveen</strong></p>
+                <p>Built as a creative AI project combining emotion recognition, game design, and modern web technologies to demonstrate how AI can create engaging, interactive experiences.</p>
+            </div>
+        </div>
+
+        <footer>Built with ❤️ by <strong>Alvira Parveen</strong> · Powered by FER + Flask</footer>
+    </div>
+    <canvas id="share-canvas"></canvas>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// DOM refs
+const video=document.getElementById('webcam'), canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d'), statusEl=document.getElementById('status');
+const detectBtn=document.getElementById('detect-btn'), spinner=document.getElementById('spinner');
+const videoWrap=document.getElementById('video-wrap'), dropOverlay=document.getElementById('drop-overlay');
+
+let voiceEnabled=false, musicEnabled=false;
+let currentAudio=null, currentEmotion=null;
+let challengeTarget=null, challengeStreak=0;
+let lastDetection=null;
+const galleryItems=[];
+
+// ═══ Webcam ═══
+async function startWebcam(){
+    try{
+        const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+        video.srcObject=stream;
+        statusEl.textContent='✅ Camera ready!';
+        detectBtn.disabled=false;
+    }catch(err){
+        statusEl.textContent='📷 No camera — upload a photo instead!';
+    }
+}
+
+// ═══ Capture & Detect ═══
+async function captureAndDetect(){
+    if(!video.srcObject){statusEl.textContent='⚠️ No camera — upload a photo.';return;}
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    ctx.drawImage(video,0,0);
+    await sendToBackend(canvas.toDataURL('image/jpeg',0.9));
+}
+
+// ═══ Upload ═══
+function handleUpload(event){
+    const file=event.target.files[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async(e)=>{showPreview(e.target.result);await sendToBackend(e.target.result);};
+    reader.readAsDataURL(file); event.target.value='';
+}
+
+// ═══ Drag & Drop ═══
+['dragenter','dragover'].forEach(e=>videoWrap.addEventListener(e,ev=>{ev.preventDefault();dropOverlay.classList.add('active');}));
+['dragleave','drop'].forEach(e=>videoWrap.addEventListener(e,ev=>{ev.preventDefault();dropOverlay.classList.remove('active');}));
+videoWrap.addEventListener('drop',e=>{
+    const file=e.dataTransfer.files[0];
+    if(file&&file.type.startsWith('image/')){
+        const reader=new FileReader();
+        reader.onload=async(ev)=>{showPreview(ev.target.result);await sendToBackend(ev.target.result);};
+        reader.readAsDataURL(file);
+    }
+});
+
+function showPreview(dataUrl){
+    video.style.display='none';
+    let p=document.getElementById('upload-preview');
+    if(!p){p=document.createElement('img');p.id='upload-preview';p.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:14px;position:absolute;inset:0;z-index:2;';videoWrap.appendChild(p);}
+    p.src=dataUrl;
+}
+
+// ═══ Send to Backend ═══
+async function sendToBackend(dataUrl){
+    detectBtn.disabled=true;spinner.style.display='block';statusEl.textContent='🔄 Analyzing…';
+    try{
+        const resp=await fetch('/detect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:dataUrl})});
+        const data=await resp.json();
+        if(data.error){statusEl.textContent='🔍 '+data.error;return;}
+
+        // Result image
+        const ri=document.getElementById('result-img');
+        ri.src='data:image/jpeg;base64,'+data.result_image;ri.style.display='block';
+        document.getElementById('placeholder').style.display='none';
+
+        // Face count
+        const fc=document.getElementById('face-count');
+        if(data.face_count>1){fc.textContent=data.face_count+' faces detected';fc.style.display='inline-block';}
+        else{fc.textContent='1 face';fc.style.display='inline-block';}
+
+        // Build NPC cards for ALL faces
+        const npcList=document.getElementById('npc-list');npcList.innerHTML='';
+        const faces=data.faces||[data]; // fallback
+        faces.forEach((f,i)=>{
+            const card=document.createElement('div');card.className='npc-card active';
+            card.innerHTML=`
+                <div class="npc-header">
+                    <span class="npc-emoji">${f.avatar}</span>
+                    <span class="npc-name">NPC Companion</span>
+                    ${faces.length>1?`<span class="npc-face-tag">Face #${f.id||i+1} · ${f.emotion}</span>`:''}
+                </div>
+                <div class="npc-dialogue">${f.npc_reply}</div>`;
+            npcList.appendChild(card);
+            setTimeout(()=>card.classList.remove('active'),3000);
+        });
+
+        // Badge (primary face)
+        const badge=document.getElementById('emotion-badge');
+        badge.textContent=data.emotion+' · '+data.confidence;badge.style.display='inline-block';
+        badge.style.background=`linear-gradient(135deg,${data.color},${data.color}dd)`;
+        badge.style.boxShadow=`0 4px 20px ${data.color}55`;
+
+        // Bars
+        renderBars(data.emotions);
+
+        // Voice
+        if(voiceEnabled) speak(data.npc_reply);
+        // Music
+        if(musicEnabled) playMoodMusic(data.emotion.toLowerCase());
+
+        currentEmotion=data.emotion.toLowerCase();
+        statusEl.textContent=data.face_count>1?`✅ ${data.face_count} faces detected!`:'✅ Emotion detected!';
+        document.getElementById('reset-btn').style.display='block';
+        document.getElementById('download-btn').style.display='block';
+
+        // Add to gallery
+        addToGallery(data);
+
+        // Store last data for share card
+        lastDetection=data;
+    }catch(err){statusEl.textContent='❌ Server error';console.error(err);}
+    finally{detectBtn.disabled=false;spinner.style.display='none';}
+}
+
+// ═══ Emotion Bars ═══
+const barColors={happy:'#48c78e',sad:'#6495ed',angry:'#e74c3c',surprise:'#f1c40f',fear:'#9b59b6',disgust:'#2ecc71',neutral:'#95a5a6'};
+function renderBars(emotions){
+    const c=document.getElementById('emotion-bars');c.innerHTML='';
+    Object.entries(emotions).sort((a,b)=>b[1]-a[1]).forEach(([em,val])=>{
+        const pct=(val*100).toFixed(1),color=barColors[em]||'#888';
+        const row=document.createElement('div');row.className='bar-row';
+        row.innerHTML=`<span class="bar-label">${em}</span><div class="bar-track"><div class="bar-fill" id="bar-${em}" style="background:${color};"></div></div><span class="bar-pct">${pct}%</span>`;
+        c.appendChild(row);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{document.getElementById('bar-'+em).style.width=pct+'%';}));
+    });
+}
+
+// ═══ Reset Camera ═══
+function resetCamera(){
+    // Remove uploaded preview
+    const preview=document.getElementById('upload-preview');
+    if(preview)preview.remove();
+    video.style.display='block';
+
+    // Clear results
+    document.getElementById('result-img').style.display='none';
+    document.getElementById('placeholder').style.display='block';
+    document.getElementById('emotion-badge').style.display='none';
+    document.getElementById('emotion-bars').innerHTML='';
+    document.getElementById('face-count').style.display='none';
+    document.getElementById('npc-list').innerHTML=`
+        <div class="npc-card"><div class="npc-header"><span class="npc-emoji">🧙</span><span class="npc-name">NPC Companion</span></div><div class="npc-dialogue">Waiting for your expression…</div></div>`;
+    document.getElementById('reset-btn').style.display='none';
+    document.getElementById('download-btn').style.display='none';
+    statusEl.textContent='✅ Camera ready — detect or upload!';
+    currentEmotion=null;
+    lastDetection=null;
+}
+
+// ═══ NPC Voice (Web Speech API) ═══
+function speak(text){
+    if(!('speechSynthesis' in window))return;
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text.replace(/[^\w\s.,!?'-]/g,''));
+    u.rate=0.95;u.pitch=1.1;u.volume=0.9;
+    const voices=window.speechSynthesis.getVoices();
+    const preferred=voices.find(v=>v.name.includes('Samantha'))||voices.find(v=>v.lang.startsWith('en'));
+    if(preferred)u.voice=preferred;
+    window.speechSynthesis.speak(u);
+}
+function toggleVoice(){
+    voiceEnabled=!voiceEnabled;
+    document.getElementById('voice-toggle').classList.toggle('on',voiceEnabled);
+    if(voiceEnabled) speak('NPC voice activated!');
+}
+
+// ═══ Mood Music (Web Audio API — generated tones) ═══
+let audioCtx=null;
+const moodConfigs={
+    happy:{notes:[523.25,659.25,783.99,1046.50],tempo:200,type:'triangle'},
+    sad:{notes:[261.63,293.66,329.63,261.63],tempo:500,type:'sine'},
+    angry:{notes:[196,220,196,174.61],tempo:150,type:'sawtooth'},
+    surprise:{notes:[523.25,783.99,1046.50,1318.51],tempo:120,type:'square'},
+    fear:{notes:[220,207.65,196,185],tempo:400,type:'sine'},
+    disgust:{notes:[174.61,185,196,185],tempo:350,type:'triangle'},
+    neutral:{notes:[329.63,349.23,392,349.23],tempo:600,type:'sine'},
+};
+
+function playMoodMusic(emotion){
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const cfg=moodConfigs[emotion]||moodConfigs.neutral;
+    const indicator=document.getElementById('music-indicator');
+    indicator.classList.add('active');
+    document.getElementById('music-label').textContent='Playing: '+emotion+' mood';
+
+    let t=audioCtx.currentTime;
+    cfg.notes.forEach((freq,i)=>{
+        const osc=audioCtx.createOscillator();
+        const gain=audioCtx.createGain();
+        osc.type=cfg.type;osc.frequency.value=freq;
+        gain.gain.setValueAtTime(0,t+i*cfg.tempo/1000);
+        gain.gain.linearRampToValueAtTime(0.15,t+i*cfg.tempo/1000+0.05);
+        gain.gain.linearRampToValueAtTime(0,t+(i+1)*cfg.tempo/1000);
+        osc.connect(gain);gain.connect(audioCtx.destination);
+        osc.start(t+i*cfg.tempo/1000);
+        osc.stop(t+(i+1.5)*cfg.tempo/1000);
+    });
+    setTimeout(()=>indicator.classList.remove('active'),cfg.notes.length*cfg.tempo+500);
+}
+function toggleMusic(){
+    musicEnabled=!musicEnabled;
+    document.getElementById('music-toggle').classList.toggle('on',musicEnabled);
+    if(musicEnabled&&currentEmotion)playMoodMusic(currentEmotion);
+}
+
+// ═══ Mode Switching ═══
+function switchMode(mode){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+    const mainGrid=document.querySelector('.main-grid');
+    mainGrid.style.display=(mode==='about')?'none':'grid';
+    if(mode==='detect'){
+        document.querySelectorAll('.tab')[0].classList.add('active');
+        document.getElementById('panel-detect').classList.add('active');
+        document.getElementById('results-detect').classList.add('active');
+    }else if(mode==='challenge'){
+        document.querySelectorAll('.tab')[1].classList.add('active');
+        document.getElementById('panel-challenge').classList.add('active');
+        document.getElementById('results-challenge').classList.add('active');
+    }else if(mode==='gallery'){
+        document.querySelectorAll('.tab')[2].classList.add('active');
+        document.getElementById('panel-detect').classList.add('active');
+        document.getElementById('results-detect').classList.add('active');
+        document.getElementById('panel-gallery').classList.add('active');
+    }else if(mode==='about'){
+        document.querySelectorAll('.tab')[3].classList.add('active');
+        document.getElementById('panel-about').classList.add('active');
+    }
+}
+
+// ═══ Challenge Mode ═══
+async function startChallenge(){
+    const resp=await fetch('/challenge/random');
+    const data=await resp.json();
+    challengeTarget=data.emotion;
+    const emojis={happy:'😄',sad:'😢',angry:'😠',surprise:'😲',fear:'😨',neutral:'😐'};
+    document.getElementById('challenge-emoji').textContent=emojis[data.emotion]||'🎭';
+    document.getElementById('challenge-prompt').textContent=data.prompt;
+    document.getElementById('challenge-sub').textContent='Get ready… show your best '+data.emotion+' face!';
+    document.getElementById('challenge-prompt-card').style.display='none';
+    document.getElementById('challenge-snap-row').style.display='flex';
+
+    // Countdown
+    const btn=document.getElementById('challenge-btn');
+    btn.disabled=true;
+    for(let i=3;i>0;i--){
+        btn.textContent=`⏳ ${i}…`;
+        await new Promise(r=>setTimeout(r,800));
+    }
+    btn.textContent='📸 Submit Expression!';
+    btn.disabled=false;
+    document.getElementById('challenge-prompt-card').style.display='block';
+    statusEl.textContent=`🎯 Show me: ${data.emotion.toUpperCase()}!`;
+}
+
+async function submitChallenge(){
+    if(!video.srcObject||!challengeTarget)return;
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    ctx.drawImage(video,0,0);
+    const dataUrl=canvas.toDataURL('image/jpeg',0.9);
+
+    spinner.style.display='block';statusEl.textContent='🔄 Scoring…';
+    try{
+        const resp=await fetch('/challenge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:dataUrl,target:challengeTarget})});
+        const data=await resp.json();
+        if(data.error){statusEl.textContent='🔍 '+data.error;spinner.style.display='none';return;}
+
+        // Update streak
+        if(data.score>=50) challengeStreak++; else challengeStreak=0;
+
+        // Show score
+        const sd=document.getElementById('score-display');sd.style.display='block';
+        document.getElementById('challenge-placeholder').style.display='none';
+        document.getElementById('score-pct').textContent=data.score+'%';
+        document.getElementById('score-feedback').textContent=data.feedback;
+        document.getElementById('score-detail').textContent=`Target: ${data.target} · You showed: ${data.actual_emotion}`;
+        document.getElementById('challenge-streak').textContent=challengeStreak>0?`🔥 Streak: ${challengeStreak}`:'';
+
+        const circle=document.getElementById('score-circle');
+        const grade=document.getElementById('score-grade');
+        grade.textContent=data.grade;
+        const gradeColors={S:'#f1c40f',A:'#48c78e',B:'#4facfe',C:'#e67e22',D:'#e74c3c'};
+        const gc=gradeColors[data.grade]||'#888';
+        circle.style.background=`conic-gradient(${gc} ${data.score}%, #1a1a3e ${data.score}%)`;
+        grade.style.background=gc;
+
+        if(voiceEnabled) speak(data.feedback);
+        statusEl.textContent='✅ Challenge scored!';
+
+        // Reset for next
+        document.getElementById('challenge-prompt-card').style.display='block';
+        document.getElementById('challenge-snap-row').style.display='none';
+    }catch(err){statusEl.textContent='❌ Server error';console.error(err);}
+    finally{spinner.style.display='none';}
+}
+
+function skipChallenge(){
+    challengeStreak=0;
+    document.getElementById('challenge-prompt-card').style.display='block';
+    document.getElementById('challenge-snap-row').style.display='none';
+    statusEl.textContent='⏭️ Skipped! Try another.';
+    startChallenge();
+}
+
+// ═══ Init ═══
+startWebcam();
+// Preload voices
+if('speechSynthesis' in window) window.speechSynthesis.getVoices();
+
+// ═══ Gallery ═══
+function addToGallery(data){
+    const item={
+        image:'data:image/jpeg;base64,'+data.result_image,
+        emotion:data.emotion,
+        confidence:data.confidence,
+        color:data.color,
+        npc_reply:data.npc_reply,
+        avatar:data.avatar,
+        time:new Date().toLocaleTimeString(),
+        faceCount:data.face_count||1,
+    };
+    galleryItems.unshift(item);
+    renderGallery();
+}
+function renderGallery(){
+    const grid=document.getElementById('gallery-grid');
+    const empty=document.getElementById('gallery-empty');
+    const count=document.getElementById('gallery-count');
+    count.textContent=galleryItems.length+' capture'+(galleryItems.length!==1?'s':'');
+    if(galleryItems.length===0){grid.innerHTML='';empty.style.display='block';grid.appendChild(empty);return;}
+    empty.style.display='none';
+    grid.innerHTML=galleryItems.map((item,i)=>`
+        <div class="gallery-item" onclick="viewGalleryItem(${i})">
+            <img src="${item.image}" alt="${item.emotion}" loading="lazy">
+            <div class="gallery-item-info">
+                <span class="gallery-emotion" style="background:${item.color}">${item.avatar} ${item.emotion} ${item.confidence}</span>
+                <div class="gallery-quote">"${item.npc_reply}"</div>
+                <div class="gallery-time">⏰ ${item.time}${item.faceCount>1?' · 👥 '+item.faceCount+' faces':''}</div>
+            </div>
+        </div>
+    `).join('');
+}
+function viewGalleryItem(i){
+    const item=galleryItems[i];
+    const ri=document.getElementById('result-img');
+    ri.src=item.image;ri.style.display='block';
+    document.getElementById('placeholder').style.display='none';
+    const badge=document.getElementById('emotion-badge');
+    badge.textContent=item.emotion+' · '+item.confidence;badge.style.display='inline-block';
+    badge.style.background=`linear-gradient(135deg,${item.color},${item.color}dd)`;
+    const npcList=document.getElementById('npc-list');
+    npcList.innerHTML=`<div class="npc-card active"><div class="npc-header"><span class="npc-emoji">${item.avatar}</span><span class="npc-name">NPC Companion</span></div><div class="npc-dialogue">${item.npc_reply}</div></div>`;
+    switchMode('detect');
+}
+function clearGallery(){
+    galleryItems.length=0;
+    renderGallery();
+}
+
+// ═══ Helper: draw rounded rect (cross-browser) ═══
+function drawRoundedRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);
+    ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+}
+
+// ═══ Download Shareable Card ═══
+function downloadShareCard(){
+    if(!lastDetection){alert('Detect an emotion first!');return;}
+    const d=lastDetection;
+    const c=document.getElementById('share-canvas');
+    const w=600,h=420; c.width=w;c.height=h;
+    const cx=c.getContext('2d');
+
+    // Background
+    const grad=cx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,'#0f0c29');grad.addColorStop(0.5,'#302b63');grad.addColorStop(1,'#24243e');
+    cx.fillStyle=grad;cx.fillRect(0,0,w,h);
+
+    // Decorative glow circles
+    cx.globalAlpha=0.1;
+    cx.fillStyle=d.color;
+    cx.beginPath();cx.arc(60,60,130,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.arc(w-70,h-50,110,0,Math.PI*2);cx.fill();
+    cx.globalAlpha=1;
+
+    // Load the detection image
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=function(){
+        // Photo thumbnail with rounded corners
+        const tx=28,ty=55,tw=200,th=270;
+        cx.save();
+        drawRoundedRect(cx,tx,ty,tw,th,12);
+        cx.clip();
+        cx.drawImage(img,tx,ty,tw,th);
+        cx.restore();
+        // Border
+        cx.strokeStyle=d.color;cx.lineWidth=2;
+        drawRoundedRect(cx,tx,ty,tw,th,12);
+        cx.stroke();
+
+        // Title
+        cx.fillStyle='#ffffff';
+        cx.font='bold 26px Arial, Helvetica, sans-serif';
+        cx.fillText('Emotion Detected',256,95);
+
+        // Emotion badge pill
+        cx.fillStyle=d.color;
+        drawRoundedRect(cx,256,110,210,34,17);
+        cx.fill();
+        cx.fillStyle='#ffffff';
+        cx.font='bold 15px Arial, Helvetica, sans-serif';
+        cx.fillText(d.avatar+' '+d.emotion+' - '+d.confidence,274,133);
+
+        // NPC quote
+        cx.fillStyle='#c0b0e0';
+        cx.font='italic 14px Arial, Helvetica, sans-serif';
+        wrapText(cx,'"'+d.npc_reply+'"',256,175,310,20);
+
+        // Top 3 emotion bars
+        const sorted=Object.entries(d.emotions).sort((a,b)=>b[1]-a[1]).slice(0,3);
+        sorted.forEach(function(pair,i){
+            const em=pair[0],val=pair[1];
+            const by=265+i*32;
+            cx.fillStyle='#666';cx.font='500 12px Arial, Helvetica, sans-serif';
+            cx.fillText(em,256,by+11);
+            // Track bg
+            cx.fillStyle='rgba(255,255,255,0.06)';
+            drawRoundedRect(cx,336,by,180,14,4);cx.fill();
+            // Fill
+            cx.fillStyle=barColors[em]||'#888';
+            const barW=Math.max(val*180,2);
+            drawRoundedRect(cx,336,by,barW,14,4);cx.fill();
+            // Pct
+            cx.fillStyle='#999';cx.font='600 11px Arial, Helvetica, sans-serif';
+            cx.fillText((val*100).toFixed(0)+'%',522,by+11);
+        });
+
+        // Footer
+        cx.fillStyle='#555';cx.font='11px Arial, Helvetica, sans-serif';
+        cx.fillText('Emotion-Aware NPC  |  by Alvira Parveen',170,h-14);
+
+        // Trigger download
+        try{
+            c.toBlob(function(blob){
+                if(!blob){fallbackDownload();return;}
+                const url=URL.createObjectURL(blob);
+                const a=document.createElement('a');
+                a.href=url;
+                a.download='emotion_card_'+d.emotion.toLowerCase()+'_'+Date.now()+'.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function(){URL.revokeObjectURL(url);},1000);
+            },'image/png');
+        }catch(e){fallbackDownload();}
+
+        function fallbackDownload(){
+            const a=document.createElement('a');
+            a.href=c.toDataURL('image/png');
+            a.download='emotion_card_'+d.emotion.toLowerCase()+'_'+Date.now()+'.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    };
+    img.onerror=function(){alert('Could not generate card. Try again.');}
+    img.src='data:image/jpeg;base64,'+d.result_image;
+}
+
+function wrapText(ctx,text,x,y,maxW,lineH){
+    var words=text.split(' ');
+    var line='';
+    for(var i=0;i<words.length;i++){
+        var test=line+words[i]+' ';
+        if(ctx.measureText(test).width>maxW && line!==''){
+            ctx.fillText(line.trim(),x,y);y+=lineH;line=words[i]+' ';
+        }else{line=test;}
+    }
+    ctx.fillText(line.trim(),x,y);
+}
+</script>
+</body>
+</html>
