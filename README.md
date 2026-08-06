@@ -109,9 +109,9 @@ python web_app.py
 
 # 🎯 Outcome
 
-✔️ Successful demonstration of AI-driven emotional interaction
-✔️ Fully working prototype
-✔️ Valid implementation under “AI-Driven Innovation in the Metaverse”
+- Successful demonstration of AI-driven emotional interaction
+- Fully working prototype
+- Valid implementation under “AI-Driven Innovation in the Metaverse”
 
 ---
 
