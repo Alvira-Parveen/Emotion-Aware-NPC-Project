@@ -16,6 +16,16 @@ This project demonstrates **how AI-powered NPCs can detect human emotions in rea
 
 ---
 
+## 📸 Screenshots
+
+### Home Page
+![Home Page](screenshots/homepage.png)
+
+### About 
+![About](screenshots/about.png)
+
+---
+
 # 🔥 Features
 
 | Feature | Description |
