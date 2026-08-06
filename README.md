@@ -10,7 +10,7 @@ This project demonstrates **how AI-powered NPCs can detect human emotions in rea
 
 ---
 
-## 🚀 Live Demo : **[Live Demo](https://huggingface.co/spaces/Alvira-14/emotion-aware-npc)**
+## 🚀 Live Demo : **[emotion-aware-npc](https://huggingface.co/spaces/Alvira-14/emotion-aware-npc)**
 
 ---
 
