@@ -1,3 +1,4 @@
+# ── Baseline Core Dependencies ──────────────────────────────
 opencv-python-headless
 tensorflow-cpu==2.15.1
 fer==22.5.1
@@ -6,3 +7,19 @@ Pillow
 flask
 gunicorn
 numpy
+
+# ── Multimodal Emotion Recognition Extensions ────────────────
+# Stage B: Text sentiment & emotion
+vaderSentiment>=3.3.2
+
+# Stage C: Audio conversion & processing
+pydub>=0.25.1
+
+# Stage E: Generative AI / LLM Response Generation (Optional)
+google-generativeai>=0.8.0
+
+# Optional heavy deep learning models (Install on GPU/high-memory machines):
+# transformers>=4.40.0
+# torch>=2.0.0
+# torchaudio>=2.0.0
+# speechbrain>=1.0.0

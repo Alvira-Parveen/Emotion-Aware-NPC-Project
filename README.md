@@ -59,6 +59,12 @@ emotion_npc/
 ├── web_app.py              # Flask backend + emotion detection API
 ├── templates/
 │   └── index.html          # Full frontend (HTML/CSS/JS)
+├── modules/                # Multimodal emotion recognition & NPC modules
+│   ├── text_emotion.py     # Text emotion recognition
+│   ├── voice_emotion.py    # Voice acoustic emotion recognition
+│   ├── fusion.py           # Weighted decision fusion
+│   ├── llm_npc.py          # Generative AI NPC dialogue
+│   └── npc_adapter.py      # Adaptive Metaverse climate & TTS
 ├── npc_emotion.py          # Original OpenCV-based script
 ├── requirements.txt        # Python dependencies
 └── README.md               # This file
@@ -69,18 +75,26 @@ emotion_npc/
 # 🚀 How to Run
 
 **1️⃣ Clone the repository**
-git clone https://github.com/YOUR_USERNAME/emotion_npc.git
-cd emotion_npc
+```bash
+git clone https://github.com/Alvira-Parveen/Emotion-Aware-NPC-Project.git
+cd Emotion-Aware-NPC-Project
+```
 
 **2️⃣ Create and activate virtual environment**
+```bash
 python3 -m venv venv
 source venv/bin/activate          # On macOS/Linux
+```
 
 **3️⃣ Install dependencies**
+```bash
 pip install -r requirements.txt
+```
 
 **4️⃣ Run the project**
+```bash
 python web_app.py
+```
 
 ---
 
@@ -126,8 +140,33 @@ python web_app.py
 
 ---
 
-## 👩‍💻 Author
+# 🌟 Real-Time Multimodal Extensions (B.Tech PBL-3)
 
+As part of the research project **"AI in Metaverse: Real-Time Multimodal Emotion-Aware Adaptive Metaverse Using Artificial Intelligence"**, the following advanced multimodal features and architectures were implemented:
+
+- **🎙️ Voice Emotion Recognition (`modules/voice_emotion.py`):**
+  - Real-time acoustic emotion analysis using prosodic energy, pitch, and zero-crossing dynamics with SpeechBrain / Wav2Vec2 support.
+  - In-browser 3-second audio recording via the Web Audio API with secure in-memory processing.
+
+- **💬 Text Emotion Recognition (`modules/text_emotion.py`):**
+  - Ekman 7-class emotion classification across text inputs (Happy, Sad, Angry, Surprise, Fear, Disgust, Neutral).
+  - Lexical and VADER sentiment analysis with HuggingFace DistilRoBERTa model pipeline compatibility.
+
+- **🌐 Weighted Decision-Level Fusion (`modules/fusion.py`):**
+  - Probability-level decision fusion combining Face ($w=0.50$), Text ($w=0.30$), and Voice ($w=0.20$).
+  - Dynamic weight re-normalization and uncalibrated score safeguards when any modality is absent.
+
+- **🤖 Generative AI NPC Companion Layer (`modules/llm_npc.py`):**
+  - Emotion-aware generative dialogue synthesis supporting Google Gemini and OpenAI APIs, with non-blocking fallback to an emotionally curated dialogue bank.
+  - Component-wise latency measurement (Face, Text, Voice, Fusion, and LLM response times in ms).
+
+- **🌌 Adaptive Metaverse Climate & Environment State (`modules/npc_adapter.py`):**
+  - Environmental atmospheric adaptation (*Energetic Sunrise*, *Emerald Aurora*, *Quiet Haven*, *Harmonic Nexus*, *Thunderous Forge*, *Verdant Sanctuary*).
+  - Dynamic Web Speech TTS pacing (adaptive pitch, rate, and style) reacting immediately to fused emotion states.
+
+---
+
+## 👩‍💻 Author
 **Name**: ALVIRA PARVEEN  
 🔗 [LinkedIn](https://www.linkedin.com/in/alvira-parveen-78022536b)  
 🌐 [GitHub](https://github.com/Alvira-Parveen)

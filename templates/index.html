@@ -390,10 +390,33 @@
                 <!-- Detect Mode buttons -->
                 <div class="mode-panel active" id="panel-detect">
                     <div class="btn-row">
-                        <button id="detect-btn" class="btn btn-detect" onclick="captureAndDetect()" disabled>🎯 Detect Emotion</button>
+                        <button id="detect-btn" class="btn btn-detect" onclick="captureAndDetect()" disabled>🎯 Detect Face</button>
                         <button class="btn btn-upload" onclick="document.getElementById('file-input').click()">📁 Upload</button>
                         <button class="btn btn-reset" id="reset-btn" onclick="resetCamera()" style="display:none;">↩️ Clear</button>
                         <input type="file" id="file-input" accept="image/*" onchange="handleUpload(event)">
+                    </div>
+
+                    <!-- Multimodal Channels (Stage B, C, D) -->
+                    <div class="multimodal-inputs" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
+                        <div style="font-size:0.75rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                            <span>💬 Multimodal Channels</span>
+                            <span style="font-size:0.65rem;color:#4facfe;background:rgba(79,172,254,0.1);padding:2px 6px;border-radius:4px;">B.Tech PBL-3</span>
+                        </div>
+                        <!-- Stage B: Text Input -->
+                        <div style="display:flex;gap:6px;margin-bottom:8px;">
+                            <input type="text" id="user-text-input" placeholder="Type message (e.g. 'I feel excited!')" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 12px;color:#fff;font-family:'Outfit',sans-serif;font-size:0.86rem;outline:none;" onkeydown="if(event.key==='Enter')detectTextOnly();" />
+                            <button class="btn btn-upload" style="flex:none;padding:9px 14px;font-size:0.8rem;" onclick="detectTextOnly()" title="Analyze Text Emotion">💬 Text</button>
+                        </div>
+                        <!-- Stage C: Audio Recording -->
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+                            <button id="voice-record-btn" class="btn" style="background:linear-gradient(135deg,#9b59b6,#8e44ad);color:#fff;padding:9px 14px;font-size:0.8rem;flex:none;" onclick="toggleVoiceRecording()">🎙️ Record Voice (3s)</button>
+                            <span id="voice-record-status" style="font-size:0.75rem;color:#777;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Mic idle</span>
+                        </div>
+                        <audio id="audio-playback" controls style="display:none;width:100%;margin-bottom:8px;height:30px;border-radius:6px;"></audio>
+                        <!-- Stage D: Multimodal Fusion Trigger -->
+                        <button id="fused-detect-btn" class="btn" style="background:linear-gradient(135deg,#a855f7,#f093fb,#4facfe);color:#fff;padding:12px;font-size:0.92rem;font-weight:800;width:100%;box-shadow:0 4px 20px rgba(168,85,247,0.35);margin-top:2px;" onclick="detectMultimodalFused()">
+                            🌐 Fused Multimodal (Face + Voice + Text)
+                        </button>
                     </div>
                 </div>
 
@@ -451,6 +474,43 @@
                             <div class="npc-dialogue">Waiting for your expression…</div>
                         </div>
                     </div>
+
+                    <!-- Stage E & F: Adaptive NPC Metaverse Climate & LLM info -->
+                    <div id="adaptive-info-box" style="display:none;margin-top:10px;padding:12px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);font-size:0.82rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <span style="font-weight:700;color:#c084fc;">🌌 Climate: <span id="metaverse-atmosphere">—</span></span>
+                            <span id="llm-source-badge" style="font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(79,172,254,0.15);color:#4facfe;">Template Bank</span>
+                        </div>
+                        <div id="interaction-recommendation" style="color:#bbb;font-size:0.8rem;line-height:1.35;margin-bottom:6px;">—</div>
+                        <div id="latency-stats" style="font-size:0.72rem;color:#777;display:flex;gap:6px;flex-wrap:wrap;border-top:1px dashed rgba(255,255,255,0.06);padding-top:6px;"></div>
+                    </div>
+
+                    <!-- Stage D: Multimodal Breakdown (Face + Text + Voice) -->
+                    <div id="multimodal-breakdown" style="display:none;margin-top:12px;padding:12px;border-radius:12px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.08);">
+                        <div style="font-size:0.74rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;">
+                            <span>🔬 Modality Signals (<span id="fused-label" style="color:#f093fb;">Fused</span>)</span>
+                            <span style="color:#a855f7;">Weighted Decision Fusion</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;text-align:center;">
+                            <div style="padding:6px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size:0.68rem;color:#888;">📷 Face</div>
+                                <div id="mod-face-val" style="font-weight:700;font-size:0.8rem;color:#fff;">—</div>
+                                <div id="mod-face-weight" style="font-size:0.62rem;color:#666;">w: 0.50</div>
+                            </div>
+                            <div style="padding:6px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size:0.68rem;color:#888;">💬 Text</div>
+                                <div id="mod-text-val" style="font-weight:700;font-size:0.8rem;color:#fff;">—</div>
+                                <div id="mod-text-weight" style="font-size:0.62rem;color:#666;">w: 0.30</div>
+                            </div>
+                            <div style="padding:6px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);">
+                                <div style="font-size:0.68rem;color:#888;">🎙️ Voice</div>
+                                <div id="mod-voice-val" style="font-weight:700;font-size:0.8rem;color:#fff;">—</div>
+                                <div id="mod-voice-weight" style="font-size:0.62rem;color:#666;">w: 0.20</div>
+                            </div>
+                        </div>
+                        <div id="fusion-warning" style="margin-top:8px;font-size:0.68rem;color:#888;line-height:1.3;font-style:italic;"></div>
+                    </div>
+
                     <div class="badge-row"><span class="emotion-badge" id="emotion-badge"></span></div>
                     <div class="bars" id="emotion-bars"></div>
                     <button class="btn-download" id="download-btn" onclick="downloadShareCard()">📥 Download Shareable Card</button>
@@ -575,6 +635,13 @@ let challengeTarget=null, challengeStreak=0;
 let lastDetection=null;
 const galleryItems=[];
 
+// Multimodal voice recording state
+let mediaRecorder=null;
+let audioChunks=[];
+let recordedAudioBase64=null;
+let recordedAudioMime='audio/webm';
+let isRecordingVoice=false;
+
 // ═══ Webcam ═══
 async function startWebcam(){
     try{
@@ -697,7 +764,7 @@ function renderBars(emotions){
     });
 }
 
-// ═══ Reset Camera ═══
+// ═══ Reset Camera & State ═══
 function resetCamera(){
     // Remove uploaded preview
     const preview=document.getElementById('upload-preview');
@@ -714,17 +781,413 @@ function resetCamera(){
         <div class="npc-card"><div class="npc-header"><span class="npc-emoji">🧙</span><span class="npc-name">NPC Companion</span></div><div class="npc-dialogue">Waiting for your expression…</div></div>`;
     document.getElementById('reset-btn').style.display='none';
     document.getElementById('download-btn').style.display='none';
+
+    // Multimodal reset
+    const adaptiveBox = document.getElementById('adaptive-info-box');
+    if (adaptiveBox) adaptiveBox.style.display = 'none';
+    const breakdown = document.getElementById('multimodal-breakdown');
+    if (breakdown) breakdown.style.display = 'none';
+    const audioEl = document.getElementById('audio-playback');
+    if (audioEl) audioEl.style.display = 'none';
+
     statusEl.textContent='✅ Camera ready — detect or upload!';
     currentEmotion=null;
     lastDetection=null;
 }
 
+// ═══ Stage B: Detect Text Only ═══
+async function detectTextOnly() {
+    const textInput = document.getElementById('user-text-input');
+    const text = (textInput ? textInput.value : '').trim();
+    if (!text) {
+        statusEl.textContent = '⚠️ Please enter a text message first!';
+        return;
+    }
+    spinner.style.display = 'block';
+    statusEl.textContent = '🔄 Analyzing text emotion…';
+    try {
+        const resp = await fetch('/detect_text', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        const data = await resp.json();
+        if (data.error) {
+            statusEl.textContent = '❌ ' + data.error;
+            return;
+        }
+
+        renderModalityResult({
+            emotion: data.prediction.emotion,
+            confidence: (data.prediction.confidence * 100).toFixed(0) + '%',
+            raw_confidence: data.prediction.confidence,
+            color: data.color,
+            avatar: data.avatar,
+            emotions: data.prediction.scores,
+            npc_reply: data.npc_response ? data.npc_response.reply : '...',
+            llm_source: data.npc_response ? data.npc_response.source : 'Template Bank',
+            adaptation: data.adaptation,
+            latencies: { text_ms: data.prediction.latency_ms, llm_ms: data.npc_response ? data.npc_response.latency_ms : 0 },
+            title: `Text Emotion: ${data.prediction.emotion.toUpperCase()} (${data.prediction.backend})`
+        });
+        statusEl.textContent = `✅ Text emotion: ${data.prediction.emotion.toUpperCase()} detected!`;
+    } catch (err) {
+        statusEl.textContent = '❌ Server error in text analysis';
+        console.error(err);
+    } finally {
+        spinner.style.display = 'none';
+    }
+}
+
+// ═══ Stage C: Voice Recording & Emotion ═══
+async function toggleVoiceRecording() {
+    const btn = document.getElementById('voice-record-btn');
+    const status = document.getElementById('voice-record-status');
+    const audioEl = document.getElementById('audio-playback');
+
+    if (isRecordingVoice) {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        recordedAudioBase64 = null;
+
+        let mime = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+            if (MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4';
+            else if (MediaRecorder.isTypeSupported('audio/ogg')) mime = 'audio/ogg';
+        }
+        recordedAudioMime = mime;
+
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+
+        mediaRecorder.onstop = () => {
+            isRecordingVoice = false;
+            btn.textContent = '🎙️ Record Voice (3s)';
+            btn.style.background = 'linear-gradient(135deg,#9b59b6,#8e44ad)';
+            status.textContent = '✅ Audio captured!';
+
+            const blob = new Blob(audioChunks, { type: recordedAudioMime });
+            audioEl.src = URL.createObjectURL(blob);
+            audioEl.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                recordedAudioBase64 = reader.result;
+            };
+            reader.readAsDataURL(blob);
+
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        isRecordingVoice = true;
+        btn.textContent = '⏹️ Recording… (3s)';
+        btn.style.background = 'linear-gradient(135deg,#e74c3c,#c0392b)';
+        status.textContent = '🔴 Listening to voice…';
+
+        setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+        }, 3200);
+
+    } catch (err) {
+        status.textContent = '⚠️ Mic access denied';
+        console.error('Microphone error:', err);
+    }
+}
+
+// ═══ Stage D: Multimodal Fused Detection ═══
+async function detectMultimodalFused() {
+    spinner.style.display = 'block';
+    statusEl.textContent = '🔄 Running multimodal fusion (Face + Voice + Text)…';
+    const fusedBtn = document.getElementById('fused-detect-btn');
+    fusedBtn.disabled = true;
+
+    // 1. Capture Face Image if camera active
+    let imageData = null;
+    const preview = document.getElementById('upload-preview');
+    if (preview && preview.src) {
+        imageData = preview.src;
+    } else if (video && video.srcObject && video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        imageData = canvas.toDataURL('image/jpeg', 0.9);
+    }
+
+    // 2. Capture Text
+    const textInput = document.getElementById('user-text-input');
+    const textData = textInput ? textInput.value.trim() : '';
+
+    // 3. Audio Data
+    const audioData = recordedAudioBase64;
+
+    if (!imageData && !textData && !audioData) {
+        statusEl.textContent = '⚠️ Provide at least one modality (camera face, text message, or voice recording)!';
+        spinner.style.display = 'none';
+        fusedBtn.disabled = false;
+        return;
+    }
+
+    try {
+        const resp = await fetch('/detect_multimodal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: imageData || '',
+                text: textData || '',
+                audio: audioData || '',
+                audio_mime: recordedAudioMime
+            })
+        });
+        if (!resp.ok) {
+            let errMsg = 'Server error (' + resp.status + ')';
+            try {
+                const errData = await resp.json();
+                if (errData.error) errMsg = errData.error;
+            } catch(e) {}
+            statusEl.textContent = '❌ ' + errMsg;
+            return;
+        }
+        const data = await resp.json();
+        if (data.error) {
+            statusEl.textContent = '❌ ' + data.error;
+            return;
+        }
+
+        renderMultimodalResult(data);
+        statusEl.textContent = `✅ Multimodal Fused Emotion: ${data.fused_emotion.toUpperCase()} (${(data.fused_confidence * 100).toFixed(0)}%)`;
+
+    } catch (err) {
+        statusEl.textContent = '❌ ' + (err.message || 'Multimodal fusion connection error');
+        console.error(err);
+    } finally {
+        spinner.style.display = 'none';
+        fusedBtn.disabled = false;
+    }
+}
+
+function renderModalityResult(info) {
+    const ri = document.getElementById('result-img');
+    document.getElementById('placeholder').style.display = 'block';
+    ri.style.display = 'none';
+
+    // NPC Dialogue Card
+    const npcList = document.getElementById('npc-list');
+    npcList.innerHTML = `
+        <div class="npc-card active">
+            <div class="npc-header">
+                <span class="npc-emoji">${info.avatar}</span>
+                <span class="npc-name">NPC Companion (${info.title || 'Adaptive'})</span>
+            </div>
+            <div class="npc-dialogue">${info.npc_reply}</div>
+        </div>`;
+
+    // Badge
+    const badge = document.getElementById('emotion-badge');
+    badge.textContent = info.emotion.toUpperCase() + ' · ' + info.confidence;
+    badge.style.display = 'inline-block';
+    badge.style.background = `linear-gradient(135deg,${info.color},${info.color}dd)`;
+    badge.style.boxShadow = `0 4px 20px ${info.color}55`;
+
+    renderBars(info.emotions);
+
+    // Adaptive box
+    if (info.adaptation) {
+        renderAdaptiveBox(info.adaptation, info.llm_source, info.latencies);
+    }
+
+    // Voice & Music
+    const ttsRate = (info.adaptation && info.adaptation.tts_parameters) ? info.adaptation.tts_parameters.rate : 0.95;
+    const ttsPitch = (info.adaptation && info.adaptation.tts_parameters) ? info.adaptation.tts_parameters.pitch : 1.1;
+    if (voiceEnabled) speak(info.npc_reply, ttsRate, ttsPitch);
+    if (musicEnabled) playMoodMusic(info.emotion.toLowerCase());
+
+    currentEmotion = info.emotion.toLowerCase();
+    document.getElementById('reset-btn').style.display = 'block';
+}
+
+function renderMultimodalResult(data) {
+    const fusedEmotion = data.fused_emotion;
+    const fusedConf = (data.fused_confidence * 100).toFixed(0) + '%';
+    const color = data.color || '#a855f7';
+    const avatar = data.avatar || '🤖';
+
+    // Show breakdown
+    const breakdown = document.getElementById('multimodal-breakdown');
+    if (breakdown) breakdown.style.display = 'block';
+    const fusedLabel = document.getElementById('fused-label');
+    if (fusedLabel) fusedLabel.textContent = fusedEmotion.toUpperCase() + ' ' + fusedConf;
+
+    // Modality cards
+    const m = data.modalities || {};
+    const w = data.fusion_details ? data.fusion_details.weights_used : {};
+
+    const faceVal = document.getElementById('mod-face-val');
+    const faceW = document.getElementById('mod-face-weight');
+    if (faceVal) {
+        if (m.face && m.face.emotion && !m.face.error) {
+            faceVal.textContent = m.face.emotion.toUpperCase() + ' (' + (m.face.confidence * 100).toFixed(0) + '%)';
+            faceVal.style.color = '#48c78e';
+        } else {
+            faceVal.textContent = 'None / 0%';
+            faceVal.style.color = '#777';
+        }
+    }
+    if (faceW) faceW.textContent = 'w: ' + (w.face !== undefined ? w.face : '0.50');
+
+    const textVal = document.getElementById('mod-text-val');
+    const textW = document.getElementById('mod-text-weight');
+    if (textVal) {
+        if (m.text && m.text.emotion && !m.text.error) {
+            textVal.textContent = m.text.emotion.toUpperCase() + ' (' + (m.text.confidence * 100).toFixed(0) + '%)';
+            textVal.style.color = '#4facfe';
+        } else {
+            textVal.textContent = 'None / 0%';
+            textVal.style.color = '#777';
+        }
+    }
+    if (textW) textW.textContent = 'w: ' + (w.text !== undefined ? w.text : '0.30');
+
+    const voiceVal = document.getElementById('mod-voice-val');
+    const voiceW = document.getElementById('mod-voice-weight');
+    if (voiceVal) {
+        if (m.voice && m.voice.emotion && !m.voice.error) {
+            voiceVal.textContent = m.voice.emotion.toUpperCase() + ' (' + (m.voice.confidence * 100).toFixed(0) + '%)';
+            voiceVal.style.color = '#f093fb';
+        } else {
+            voiceVal.textContent = 'None / 0%';
+            voiceVal.style.color = '#777';
+        }
+    }
+    if (voiceW) voiceW.textContent = 'w: ' + (w.voice !== undefined ? w.voice : '0.20');
+
+    const warnEl = document.getElementById('fusion-warning');
+    if (warnEl) {
+        if (data.fusion_details && data.fusion_details.warning) {
+            warnEl.textContent = '⚠️ ' + data.fusion_details.warning;
+        } else {
+            warnEl.textContent = '';
+        }
+    }
+
+    // NPC Dialogue
+    const reply = data.npc_response ? data.npc_response.reply : '...';
+    const npcList = document.getElementById('npc-list');
+    npcList.innerHTML = `
+        <div class="npc-card active">
+            <div class="npc-header">
+                <span class="npc-emoji">${avatar}</span>
+                <span class="npc-name">Adaptive Metaverse NPC</span>
+            </div>
+            <div class="npc-dialogue">${reply}</div>
+        </div>`;
+
+    // Badge
+    const badge = document.getElementById('emotion-badge');
+    badge.textContent = fusedEmotion.toUpperCase() + ' · ' + fusedConf + ' (FUSED)';
+    badge.style.display = 'inline-block';
+    badge.style.background = `linear-gradient(135deg,${color},${color}dd)`;
+    badge.style.boxShadow = `0 4px 20px ${color}55`;
+
+    renderBars(data.fused_scores);
+
+    // Adaptive Box
+    const llmSource = data.npc_response ? data.npc_response.source : 'Template Bank';
+    renderAdaptiveBox(data.adaptation, llmSource, data.latencies);
+
+    // Metaverse Environment styling (atmosphere shifts)
+    if (data.adaptation && data.adaptation.environment_state) {
+        applyMetaverseAtmosphere(data.adaptation.environment_state);
+    }
+
+    // Voice & Music
+    const ttsRate = (data.adaptation && data.adaptation.tts_parameters) ? data.adaptation.tts_parameters.rate : 0.95;
+    const ttsPitch = (data.adaptation && data.adaptation.tts_parameters) ? data.adaptation.tts_parameters.pitch : 1.1;
+    if (voiceEnabled) speak(reply, ttsRate, ttsPitch);
+    if (musicEnabled) playMoodMusic(fusedEmotion.toLowerCase());
+
+    currentEmotion = fusedEmotion.toLowerCase();
+    document.getElementById('reset-btn').style.display = 'block';
+    document.getElementById('download-btn').style.display = 'block';
+
+    // Store for card
+    lastDetection = {
+        emotion: fusedEmotion.toUpperCase(),
+        confidence: fusedConf,
+        color: color,
+        avatar: avatar,
+        npc_reply: reply,
+        emotions: data.fused_scores,
+        result_image: data.result_image || ''
+    };
+}
+
+function renderAdaptiveBox(adaptation, llmSource, latencies) {
+    const box = document.getElementById('adaptive-info-box');
+    if (!adaptation) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+
+    const env = adaptation.environment_state || {};
+    const atm = document.getElementById('metaverse-atmosphere');
+    if (atm) atm.textContent = env.atmosphere || 'Balanced Space';
+
+    const badge = document.getElementById('llm-source-badge');
+    if (badge) {
+        badge.textContent = llmSource || 'Template Bank';
+        if (llmSource && llmSource.toLowerCase().includes('gemini')) {
+            badge.style.background = 'rgba(72,199,142,0.2)';
+            badge.style.color = '#48c78e';
+        } else {
+            badge.style.background = 'rgba(79,172,254,0.15)';
+            badge.style.color = '#4facfe';
+        }
+    }
+
+    const rec = document.getElementById('interaction-recommendation');
+    if (rec) {
+        rec.textContent = '💡 ' + (adaptation.interaction_recommendation || 'Engage freely with the virtual environment.');
+    }
+
+    const statsEl = document.getElementById('latency-stats');
+    if (latencies) {
+        const parts = [];
+        if (latencies.face_ms !== undefined) parts.push(`Face: ${latencies.face_ms}ms`);
+        if (latencies.text_ms !== undefined) parts.push(`Text: ${latencies.text_ms}ms`);
+        if (latencies.voice_ms !== undefined) parts.push(`Voice: ${latencies.voice_ms}ms`);
+        if (latencies.fusion_ms !== undefined) parts.push(`Fusion: ${latencies.fusion_ms}ms`);
+        if (latencies.llm_ms !== undefined) parts.push(`LLM: ${latencies.llm_ms}ms`);
+        if (latencies.end_to_end_ms !== undefined) parts.push(`⚡ Total: ${latencies.end_to_end_ms}ms`);
+        statsEl.innerHTML = parts.map(p => `<span style="background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:4px;">${p}</span>`).join('');
+    } else {
+        statsEl.innerHTML = '';
+    }
+}
+
+function applyMetaverseAtmosphere(env) {
+    if (!env) return;
+    const orb1 = document.querySelector('.bg-mesh .orb:nth-child(1)');
+    const orb2 = document.querySelector('.bg-mesh .orb:nth-child(2)');
+    if (orb1 && env.primary_color) orb1.style.background = env.primary_color;
+    if (orb2 && env.secondary_color) orb2.style.background = env.secondary_color;
+}
+
 // ═══ NPC Voice (Web Speech API) ═══
-function speak(text){
+function speak(text, rate=0.95, pitch=1.1){
     if(!('speechSynthesis' in window))return;
     window.speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text.replace(/[^\w\s.,!?'-]/g,''));
-    u.rate=0.95;u.pitch=1.1;u.volume=0.9;
+    u.rate=rate || 0.95;
+    u.pitch=pitch || 1.1;
+    u.volume=0.9;
     const voices=window.speechSynthesis.getVoices();
     const preferred=voices.find(v=>v.name.includes('Samantha'))||voices.find(v=>v.lang.startsWith('en'));
     if(preferred)u.voice=preferred;
